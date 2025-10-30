@@ -4,14 +4,35 @@ from lexer import lexer
 from . import parser
 
 
+@pytest.mark.parametrize("input, operator, integer_value", [
+    ("!5;", "!", 5),
+    ("-15;", "-", 15),
+])
+def test_prefix_operators(input: str, operator: str, integer_value: int) -> None:
+    program = create_program_from_input(input, 1)
+    stmt = program.statements[0]
+    assert isinstance(
+        stmt, ast.ExpressionStatement), f"stmt not ast.ExpressionStatement. got={type(stmt)}"
+    exp = stmt.expression
+    assert isinstance(
+        exp, ast.PrefixExpression), f"exp not ast.PrefixExpression. got={type(exp)}"
+    assert exp.operator == operator, f"exp.operator is not '{operator}'. got={exp.operator}"
+    test_integer_literal(exp.right, integer_value)
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("integ, value", [])
+def test_integer_literal(integ: ast.Expression | None, value: int) -> None:
+    assert isinstance(
+        integ, ast.IntegerLiteral), f"exp not ast.IntegerLiteral. got={type(integ)}"
+    assert integ.value == value, f"integ.value not {value}. got={integ.value}"
+    assert integ.token_literal(
+    ) == str(value), f"integ.token_literal not {value}. got={integ.token_literal()}"
+
+
 def test_integer_literal_expression() -> None:
     input = "5;"
-    l = lexer.Lexer(input)
-    p = parser.Parser(l)
-    program = p.parse_program()
-    check_parse_errors(p)
-    assert len(
-        program.statements) == 1, f"program.statements does not contain 1 statement. got={len(program.statements)}"
+    program = create_program_from_input(input, 1)
     stmt = program.statements[0]
     assert isinstance(
         stmt, ast.ExpressionStatement), f"stmt not ast.ExpressionStatement. got={type(stmt)}"
@@ -25,12 +46,7 @@ def test_integer_literal_expression() -> None:
 
 def test_identifier_expression() -> None:
     input = "foobar;"
-    l = lexer.Lexer(input)
-    p = parser.Parser(l)
-    program = p.parse_program()
-    check_parse_errors(p)
-    assert len(
-        program.statements) == 1, f"program.statements does not contain 1 statement. got={len(program.statements)}"
+    program = create_program_from_input(input, 1)
     stmt = program.statements[0]
     assert isinstance(
         stmt, ast.ExpressionStatement), f"stmt not ast.ExpressionStatement. got={type(stmt)}"
@@ -49,13 +65,7 @@ let y = 10;
 let foobar = 838383;
 """
     expected_identifiers = ["x", "y", "foobar"]
-    l = lexer.Lexer(input)
-    p = parser.Parser(l)
-    program = p.parse_program()
-    check_parse_errors(p)
-    assert len(
-        program.statements) == 3, f"program.statements does not contain 3 statements. got={len(program.statements)}"
-
+    program = create_program_from_input(input, 3)
     for i, ident in enumerate(expected_identifiers):
         stmt = program.statements[i]
         assert isinstance(
@@ -74,18 +84,22 @@ return 5;
 return 10;
 return 993322;
 """
-    l = lexer.Lexer(input)
-    p = parser.Parser(l)
-    program = p.parse_program()
-    check_parse_errors(p)
-    assert len(
-        program.statements) == 3, f"program.statements does not contain 3 statements. got={len(program.statements)}"
-
+    program = create_program_from_input(input, 3)
     for stmt in program.statements:
         assert isinstance(
             stmt, ast.ReturnStatement), f"stmt not ast.ReturnStatement. got={type(stmt)}"
         assert stmt.token_literal(
         ) == "return", f"stmt.token_literal not 'return'. got='{stmt.token_literal()}'"
+
+
+def create_program_from_input(input: str, n_statements: int) -> ast.Program:
+    l = lexer.Lexer(input)
+    p = parser.Parser(l)
+    program = p.parse_program()
+    check_parse_errors(p)
+    assert len(
+        program.statements) == n_statements, f"program.statements does not contain {n_statements} statements. got={len(program.statements)}"
+    return program
 
 
 def check_parse_errors(p: parser.Parser) -> None:

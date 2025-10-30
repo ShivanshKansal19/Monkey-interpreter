@@ -28,6 +28,10 @@ class Parser:
             token.IDENT), self.parse_identifier)
         self.register_prefix(token.TokenType(token.INT),
                              self.parse_integer_literal)
+        self.register_prefix(token.TokenType(token.BANG),
+                             self.parse_prefix_expression)
+        self.register_prefix(token.TokenType(token.MINUS),
+                             self.parse_prefix_expression)
         self.infix_parse_fns: dict[token.TokenType, infix_parse_fn] = {}
 
     def register_prefix(self, token_type: token.TokenType, fn: prefix_parse_fn) -> None:
@@ -64,6 +68,21 @@ class Parser:
             self.next_token()
         return stmt
 
+    def parse_expression(self, precedence: int) -> ast.Expression | None:
+        prefix = self.prefix_parse_fns.get(self.cur_token.type)
+        if prefix is None:
+            self.no_prefix_parse_error(self.cur_token.type)
+            return None
+        left_exp = prefix()
+        return left_exp
+
+    def parse_prefix_expression(self) -> ast.Expression:
+        expression = ast.PrefixExpression(
+            self.cur_token, self.cur_token.literal)
+        self.next_token()
+        expression.right = self.parse_expression(PREFIX)
+        return expression
+
     def parse_integer_literal(self) -> ast.IntegerLiteral | None:
         lit = ast.IntegerLiteral(self.cur_token)
         try:
@@ -77,13 +96,6 @@ class Parser:
 
     def parse_identifier(self) -> ast.Identifier:
         return ast.Identifier(self.cur_token, self.cur_token.literal)
-
-    def parse_expression(self, precedence: int) -> ast.Expression | None:
-        prefix = self.prefix_parse_fns.get(self.cur_token.type)
-        if prefix is None:
-            return None
-        left_exp = prefix()
-        return left_exp
 
     def parse_let_statement(self) -> ast.LetStatement | None:
         stmt = ast.LetStatement(self.cur_token)
@@ -116,9 +128,15 @@ class Parser:
             self.peek_error(t)
             return False
 
+    # Errors
+
     def Errors(self) -> list[str]:
         return self.errors
 
     def peek_error(self, t: token.TokenType) -> None:
         msg = f"expected next token to be {t}, got {self.peek_token.type} instead"
+        self.errors.append(msg)
+
+    def no_prefix_parse_error(self, t: token.TokenType) -> None:
+        msg = f"no prefix parse function for {t} found"
         self.errors.append(msg)
