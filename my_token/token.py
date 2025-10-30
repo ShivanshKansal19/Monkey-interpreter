@@ -39,14 +39,14 @@ IF = "IF"
 ELSE = "ELSE"
 RETURN = "RETURN"
 
-keywords = {
+keywords: dict[str, TokenType] = {
     "fn": TokenType(FUNCTION),
     "let": TokenType(LET),
-    "true": TRUE,
-    "false": FALSE,
-    "if": IF,
-    "else": ELSE,
-    "return": RETURN,
+    "true": TokenType(TRUE),
+    "false": TokenType(FALSE),
+    "if": TokenType(IF),
+    "else": TokenType(ELSE),
+    "return": TokenType(RETURN),
 }
 
 
