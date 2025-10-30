@@ -27,6 +27,12 @@ class LetStatement(Statement):
     def token_literal(self)->str:
         return self.token.literal
 
+class ReturnStatement(Statement):
+    def __init__(self, token:token.Token) -> None:
+        self.token=token
+        self.return_value: Expression|None =None
+    def token_literal(self)->str:
+        return self.token.literal
 
 class Program(Node):
     def __init__(self) -> None:
