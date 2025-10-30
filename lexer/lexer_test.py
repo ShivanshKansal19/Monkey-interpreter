@@ -1,10 +1,12 @@
 import pytest
 from my_token import token
 from . import lexer
+
+
 @pytest.mark.parametrize(
-"my_input, expected_tokens",
-    [   (
-            '''=+(){},;''',
+    "my_input, expected_tokens",
+    [(
+        '''=+(){},;''',
         [
             (token.ASSIGN, "="),
             (token.PLUS, "+"),
@@ -86,7 +88,7 @@ if (5 < 10) {
             (token.INT, "10"),
             (token.GT, ">"),
             (token.INT, "5"),
-            (token.SEMICOLON,";"),
+            (token.SEMICOLON, ";"),
             (token.IF, "if"),
             (token.LPAREN, "("),
             (token.INT, "5"),
@@ -114,9 +116,9 @@ if (5 < 10) {
             (token.SEMICOLON, ";"),
             (token.EOF, ""),
         ]),
-    ]
+     ]
 )
-def test_next_token(my_input:str, expected_tokens:list[tuple[str, str]])->None:
+def test_next_token(my_input: str, expected_tokens: list[tuple[str, str]]) -> None:
     my_lexer = lexer.Lexer(my_input)
 
     for i, (expected_type, expected_literal) in enumerate(expected_tokens):

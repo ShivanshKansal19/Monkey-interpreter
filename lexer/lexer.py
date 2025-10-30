@@ -16,9 +16,9 @@ class Lexer:
             self.ch = self.input[self.read_position]
         self.position = self.read_position
         self.read_position += 1
-    
-    def peek_char(self)->str:
-        if self.read_position>=len(self.input):
+
+    def peek_char(self) -> str:
+        if self.read_position >= len(self.input):
             return ''
         else:
             return self.input[self.read_position]
@@ -26,35 +26,35 @@ class Lexer:
     def next_token(self) -> Token:
         self.skip_whitespace()
         match self.ch:
-            #Operators
-            case '=': 
-                if self.peek_char()=='=':
-                    ch=self.ch
+            # Operators
+            case '=':
+                if self.peek_char() == '=':
+                    ch = self.ch
                     self.read_char()
-                    tok =Token(TokenType(EQ),ch+self.ch)
+                    tok = Token(TokenType(EQ), ch+self.ch)
                 else:
                     tok = Token(TokenType(ASSIGN), self.ch)
             case '+': tok = Token(TokenType(PLUS), self.ch)
             case '-': tok = Token(TokenType(MINUS), self.ch)
-            case '!': 
-                if self.peek_char()=='=':
-                    ch=self.ch
+            case '!':
+                if self.peek_char() == '=':
+                    ch = self.ch
                     self.read_char()
-                    tok =Token(TokenType(NOT_EQ),ch+self.ch)
+                    tok = Token(TokenType(NOT_EQ), ch+self.ch)
                 else:
                     tok = Token(TokenType(BANG), self.ch)
             case '*': tok = Token(TokenType(ASTERISK), self.ch)
             case '/': tok = Token(TokenType(SLASH), self.ch)
             case '<': tok = Token(TokenType(LT), self.ch)
             case '>': tok = Token(TokenType(GT), self.ch)
-            #Delimiters
+            # Delimiters
             case ';': tok = Token(TokenType(SEMICOLON), self.ch)
             case ',': tok = Token(TokenType(COMMA), self.ch)
             case '(': tok = Token(TokenType(LPAREN), self.ch)
             case ')': tok = Token(TokenType(RPAREN), self.ch)
             case '{': tok = Token(TokenType(LBRACE), self.ch)
             case '}': tok = Token(TokenType(RBRACE), self.ch)
-            #EOF
+            # EOF
             case '': tok = Token(TokenType(EOF), '')
             case _:
                 if self.ch.isalpha() or self.ch == '_':
