@@ -24,7 +24,21 @@ class PrefixExpression(Expression):
         self.right = right
 
     def __str__(self) -> str:
-        return f"( {self.operator} {str(self.right)} )"
+        return f"({self.operator}{str(self.right)})"
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+
+class InfixExpression(Expression):
+    def __init__(self, token: token.Token, left: Expression | None, operator: str, right: Expression | None = None) -> None:
+        self.token = token
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def __str__(self) -> str:
+        return f"({str(self.left)} {self.operator} {str(self.right)})"
 
     def token_literal(self) -> str:
         return self.token.literal
@@ -93,7 +107,7 @@ class Program(Node):
         self.statements: list[Statement] = stmts if stmts is not None else []
 
     def __str__(self) -> str:
-        return '\n'.join([str(s) for s in self.statements])
+        return ''.join([str(s) for s in self.statements])
 
     def token_literal(self) -> str:
         if len(self.statements) > 0:
