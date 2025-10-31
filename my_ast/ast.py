@@ -89,6 +89,29 @@ class Boolean(Expression):
         return self.token.literal
 
 
+class BlockStatement(Statement):
+    def __init__(self, token: token.Token, statements: list[Statement] | None = None) -> None:
+        self.token = token
+        self.statements = statements if statements is not None else []
+
+    def __str__(self) -> str:
+        return ''.join(map(str, self.statements))
+
+
+class IfExpression(Expression):
+    def __init__(self, token: token.Token, condition: Expression | None = None, consequence: BlockStatement | None = None, alternative: BlockStatement | None = None) -> None:
+        self.token = token
+        self.condition = condition
+        self.consequence = consequence
+        self.alternative = alternative
+
+    def __str__(self) -> str:
+        return f"if{str(self.condition)} {str(self.consequence)} {'else'+ str(self.alternative) if self.alternative is not None else ''}"
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+
 class LetStatement(Statement):
     def __init__(self, token: token.Token, name: Identifier | None = None, value: Expression | None = None) -> None:
         self.token = token

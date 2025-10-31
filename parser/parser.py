@@ -43,6 +43,7 @@ class Parser:
             TokenType(token.LPAREN): self.parse_grouped_expression,
             TokenType(token.TRUE): self.parse_boolean,
             TokenType(token.FALSE): self.parse_boolean,
+            TokenType(token.IF): self.parse_if_expression,
         }
         self.infix_parse_fns: dict[TokenType, infix_parse_fn] = {
             TokenType(token.PLUS): self.parse_infix_expression,
@@ -141,6 +142,34 @@ class Parser:
 
     def parse_boolean(self) -> ast.Boolean:
         return ast.Boolean(self.cur_token, self.cur_token_is(TokenType(token.TRUE)))
+
+    def parse_if_expression(self) -> ast.IfExpression | None:
+        expression = ast.IfExpression(self.cur_token)
+        if not self.expect_peek(TokenType(token.LPAREN)):
+            return None
+        self.next_token()
+        expression.condition = self.parse_expression(LOWEST)
+        if not self.expect_peek(TokenType(token.RPAREN)):
+            return None
+        if not self.expect_peek(TokenType(token.LBRACE)):
+            return None
+        expression.consequence = self.parse_block_statement()
+        if self.peek_token_is(TokenType(token.ELSE)):
+            self.next_token()
+            if not self.expect_peek(TokenType(token.LBRACE)):
+                return None
+            expression.alternative = self.parse_block_statement()
+        return expression
+
+    def parse_block_statement(self) -> ast.BlockStatement:
+        block = ast.BlockStatement(self.cur_token)
+        self.next_token()
+        while not self.cur_token_is(TokenType(token.RBRACE)) and not self.cur_token_is(TokenType(token.EOF)):
+            stmt = self.parse_statement()
+            if stmt is not None:
+                block.statements.append(stmt)
+            self.next_token()
+        return block
 
     def parse_let_statement(self) -> ast.LetStatement | None:
         stmt = ast.LetStatement(self.cur_token)

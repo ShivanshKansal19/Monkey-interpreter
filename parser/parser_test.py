@@ -100,6 +100,40 @@ def test_boolean_expressions(input: str, expected_value: bool) -> None:
     assert_boolean(bool, expected_value)
 
 
+def test_if_expression1() -> None:
+    input = "if (x < y) { x }"
+    program = create_program_from_input(input, 1)
+    exp = assert_expression_statement(program.statements[0])
+    assert isinstance(
+        exp, ast.IfExpression), f"exp is not ast.IfExpression. got={type(exp)}"
+    assert_infix_expression(exp.condition, "x", "<", "y")
+    assert exp.consequence
+    assert len(
+        exp.consequence.statements) == 1, f"consequence is not 1 statement. got={len(exp.consequence.statements)}"
+    consequence = assert_expression_statement(exp.consequence.statements[0])
+    assert_identifier(consequence, "x")
+    assert exp.alternative is None, f"exp.alternative was not None. got={exp.alternative}"
+
+
+def test_if_expression2() -> None:
+    input = "if (x < y) { x } else { y }"
+    program = create_program_from_input(input, 1)
+    exp = assert_expression_statement(program.statements[0])
+    assert isinstance(
+        exp, ast.IfExpression), f"exp is not ast.IfExpression. got={type(exp)}"
+    assert_infix_expression(exp.condition, "x", "<", "y")
+    assert exp.consequence is not None, "exp.consequence is None"
+    assert len(
+        exp.consequence.statements) == 1, f"consequence is not 1 statement. got={len(exp.consequence.statements)}"
+    consequence = assert_expression_statement(exp.consequence.statements[0])
+    assert_identifier(consequence, "x")
+    assert exp.alternative is not None, "exp.alternative is None"
+    assert len(
+        exp.alternative.statements) == 1, f"alternative is not 1 statement. got={len(exp.alternative.statements)}"
+    alternative = assert_expression_statement(exp.alternative.statements[0])
+    assert_identifier(alternative, "y")
+
+
 @pytest.mark.parametrize("input, expected_identifier, expected_value", [
     ("let x = 5;", "x", 5),
     ("let y = true;", "y", True),
