@@ -21,6 +21,7 @@ precedences: dict[TokenType, int] = {
     TokenType(token.MINUS): SUM,
     TokenType(token.SLASH): PRODUCT,
     TokenType(token.ASTERISK): PRODUCT,
+    TokenType(token.LPAREN): CALL,
 }
 
 prefix_parse_fn = Callable[[], ast.Expression | None]
@@ -41,6 +42,7 @@ class Parser:
             TokenType(token.MINUS): self.parse_prefix_expression,
             TokenType(token.BANG): self.parse_prefix_expression,
             TokenType(token.LPAREN): self.parse_grouped_expression,
+            TokenType(token.FUNCTION): self.parse_function_literal,
             TokenType(token.TRUE): self.parse_boolean,
             TokenType(token.FALSE): self.parse_boolean,
             TokenType(token.IF): self.parse_if_expression,
@@ -54,6 +56,7 @@ class Parser:
             TokenType(token.NOT_EQ): self.parse_infix_expression,
             TokenType(token.LT): self.parse_infix_expression,
             TokenType(token.GT): self.parse_infix_expression,
+            TokenType(token.LPAREN): self.parse_call_expression,
         }
 
     def register_prefix(self, token_type: TokenType, fn: prefix_parse_fn) -> None:
@@ -130,6 +133,26 @@ class Parser:
         lit.value = value
         return lit
 
+    def parse_call_expression(self, function: ast.Expression | None) -> ast.CallExpression:
+        exp = ast.CallExpression(self.cur_token, function)
+        exp.arguments = self.parse_call_arguments()
+        return exp
+
+    def parse_call_arguments(self) -> list[ast.Expression]:
+        args = []
+        if self.peek_token_is(TokenType(token.RPAREN)):
+            self.next_token()
+            return args
+        self.next_token()
+        args.append(self.parse_expression(LOWEST))
+        while self.peek_token_is(TokenType(token.COMMA)):
+            self.next_token()
+            self.next_token()
+            args.append(self.parse_expression(LOWEST))
+        if not self.expect_peek(TokenType(token.RPAREN)):
+            return []
+        return args
+
     def parse_identifier(self) -> ast.Identifier:
         return ast.Identifier(self.cur_token, self.cur_token.literal)
 
@@ -139,6 +162,33 @@ class Parser:
         if not self.expect_peek(TokenType(token.RPAREN)):
             return None
         return exp
+
+    def parse_function_literal(self) -> ast.FunctionLiteral | None:
+        lit = ast.FunctionLiteral(self.cur_token)
+        if not self.expect_peek(TokenType(token.LPAREN)):
+            return None
+        lit.parameters = self.parse_function_parameters()
+        if not self.expect_peek(TokenType(token.LBRACE)):
+            return None
+        lit.body = self.parse_block_statement()
+        return lit
+
+    def parse_function_parameters(self) -> list[ast.Identifier]:
+        identifiers: list[ast.Identifier] = []
+        if self.peek_token_is(TokenType(token.RPAREN)):
+            self.next_token()
+            return identifiers
+        self.next_token()
+        ident = ast.Identifier(self.cur_token, self.cur_token.literal)
+        identifiers.append(ident)
+        while self.peek_token_is(TokenType(token.COMMA)):
+            self.next_token()
+            self.next_token()
+            ident = ast.Identifier(self.cur_token, self.cur_token.literal)
+            identifiers.append(ident)
+        if not self.expect_peek(TokenType(token.RPAREN)):
+            return []
+        return identifiers
 
     def parse_boolean(self) -> ast.Boolean:
         return ast.Boolean(self.cur_token, self.cur_token_is(TokenType(token.TRUE)))

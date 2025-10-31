@@ -112,6 +112,34 @@ class IfExpression(Expression):
         return self.token.literal
 
 
+class FunctionLiteral(Expression):
+    def __init__(self, token: token.Token, parameters: list[Identifier] | None = None, body: BlockStatement | None = None) -> None:
+        self.token = token
+        self.parameters = parameters if parameters is not None else []
+        self.body = body
+
+    def __str__(self) -> str:
+        params = ', '.join([str(p) for p in self.parameters])
+        return f"{self.token_literal()}({params}) {str(self.body)}"
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+
+class CallExpression(Expression):
+    def __init__(self, token: token.Token, function: Expression | None = None, arguments: list[Expression] | None = None) -> None:
+        self.token = token
+        self.function = function
+        self.arguments = arguments if arguments is not None else []
+
+    def __str__(self) -> str:
+        args = ', '.join([str(a) for a in self.arguments])
+        return f"{str(self.function)}({args})"
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+
 class LetStatement(Statement):
     def __init__(self, token: token.Token, name: Identifier | None = None, value: Expression | None = None) -> None:
         self.token = token

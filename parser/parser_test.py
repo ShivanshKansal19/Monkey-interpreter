@@ -27,6 +27,10 @@ from . import parser
     ("2 / (5 + 5)", "(2 / (5 + 5))"),
     ("-(5 + 5)", "(-(5 + 5))"),
     ("!(true == true)", "(!(true == true))"),
+    ("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+    ("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+     "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+    ("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"),
 ])
 def test_operator_precedence_parsing(input: str, expected: str) -> None:
     program = create_program_from_input(input)
@@ -132,6 +136,53 @@ def test_if_expression2() -> None:
         exp.alternative.statements) == 1, f"alternative is not 1 statement. got={len(exp.alternative.statements)}"
     alternative = assert_expression_statement(exp.alternative.statements[0])
     assert_identifier(alternative, "y")
+
+
+def test_function_literal_parsing() -> None:
+    input = "fn(x, y) { x + y; }"
+    program = create_program_from_input(input, 1)
+    function = assert_expression_statement(program.statements[0])
+    assert isinstance(
+        function, ast.FunctionLiteral), f"function is not ast.FunctionLiteral. got={type(function)}"
+    assert len(
+        function.parameters) == 2, f"function literal parameters wrong. want 2, got={len(function.parameters)}"
+    assert_identifier(function.parameters[0], "x")
+    assert_identifier(function.parameters[1], "y")
+    assert function.body is not None, "function.body is None"
+    assert len(
+        function.body.statements) == 1, f"function body statements wrong. want 1, got={len(function.body.statements)}"
+    body_stmt = assert_expression_statement(function.body.statements[0])
+    assert_infix_expression(body_stmt, "x", "+", "y")
+
+
+@pytest.mark.parametrize("input, expected_parameters", [
+    ("fn() {};", []),
+    ("fn(x) {};", ["x"]),
+    ("fn(x, y, z) {};", ["x", "y", "z"]),
+])
+def test_function_parameter_parsing(input: str, expected_parameters: list[str]) -> None:
+    program = create_program_from_input(input, 1)
+    function = assert_expression_statement(program.statements[0])
+    assert isinstance(
+        function, ast.FunctionLiteral), f"function is not ast.FunctionLiteral. got={type(function)}"
+    assert len(
+        function.parameters) == len(expected_parameters), f"function literal parameters wrong. want {len(expected_parameters)}, got={len(function.parameters)}"
+    for i, ident in enumerate(expected_parameters):
+        assert_identifier(function.parameters[i], ident)
+
+
+def test_call_expression_parsing() -> None:
+    input = "add(1, 2 * 3, 4 + 5);"
+    program = create_program_from_input(input, 1)
+    exp = assert_expression_statement(program.statements[0])
+    assert isinstance(
+        exp, ast.CallExpression), f"exp is not ast.CallExpression. got={type(exp)}"
+    assert_identifier(exp.function, "add")
+    assert len(
+        exp.arguments) == 3, f"wrong length of arguments. got={len(exp.arguments)}"
+    assert_literal_expression(exp.arguments[0], 1)
+    assert_infix_expression(exp.arguments[1], 2, "*", 3)
+    assert_infix_expression(exp.arguments[2], 4, "+", 5)
 
 
 @pytest.mark.parametrize("input, expected_identifier, expected_value", [
