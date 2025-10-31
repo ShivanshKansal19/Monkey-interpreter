@@ -18,6 +18,10 @@ from . import parser
     ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
     ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
     ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+    ("true", "true"),
+    ("false", "false"),
+    ("3 > 5 == false", "((3 > 5) == false)"),
+    ("3 < 5 == true", "((3 < 5) == true)"),
 ])
 def test_operator_precedence_parsing(input: str, expected: str) -> None:
     program = create_program_from_input(input)
@@ -28,6 +32,8 @@ def test_operator_precedence_parsing(input: str, expected: str) -> None:
 @pytest.mark.parametrize("input, operator, integer_value", [
     ("!5;", "!", 5),
     ("-15;", "-", 15),
+    ("!true;", "!", True),
+    ("!false;", "!", False),
 ])
 def test_prefix_expressions(input: str, operator: str, integer_value: int) -> None:
     program = create_program_from_input(input, 1)
@@ -45,6 +51,9 @@ def test_prefix_expressions(input: str, operator: str, integer_value: int) -> No
     ("5 < 5;", 5, "<", 5),
     ("5 == 5;", 5, "==", 5),
     ("5 != 5;", 5, "!=", 5),
+    ("true == true", True, "==", True),
+    ("true != false", True, "!=", False),
+    ("false == false", False, "==", False),
 ])
 def test_infix_expressions(input: str, left_value: int, operator: str, right_value: int) -> None:
     program = create_program_from_input(input, 1)
@@ -57,7 +66,7 @@ def test_infix_expressions(input: str, left_value: int, operator: str, right_val
     ("5;", 5),
     ("10;", 10),
 ])
-def test_integer_literal_expression(input: str, expected_value: int) -> None:
+def test_integer_literal_expressions(input: str, expected_value: int) -> None:
     program = create_program_from_input(input, 1)
     stmt = program.statements[0]
     literal = assert_expression_statement(stmt)
@@ -68,16 +77,27 @@ def test_integer_literal_expression(input: str, expected_value: int) -> None:
     ("foobar;", "foobar"),
     ("x;", "x"),
 ])
-def test_identifier_expression(input: str, expected_identifier: str) -> None:
+def test_identifier_expressions(input: str, expected_identifier: str) -> None:
     program = create_program_from_input(input, 1)
     stmt = program.statements[0]
     ident = assert_expression_statement(stmt)
     assert_identifier(ident, expected_identifier)
 
 
+@pytest.mark.parametrize("input, expected_value", [
+    ("true;", True),
+    ("false;", False),
+])
+def test_boolean_expressions(input: str, expected_value: bool) -> None:
+    program = create_program_from_input(input, 1)
+    stmt = program.statements[0]
+    bool = assert_expression_statement(stmt)
+    assert_boolean(bool, expected_value)
+
+
 @pytest.mark.parametrize("input, expected_identifier, expected_value", [
     ("let x = 5;", "x", 5),
-    # ("let y = true;", "y", True),
+    ("let y = true;", "y", True),
     ("let foobar = y;", "foobar", "y"),
 ])
 def test_let_statements(input: str, expected_identifier: str, expected_value: object) -> None:
@@ -89,7 +109,7 @@ def test_let_statements(input: str, expected_identifier: str, expected_value: ob
 
 @pytest.mark.parametrize("input, expected_value", [
     ("return 5;", 5),
-    # ("return TRUE;", True),
+    ("return true;", True),
     ("return foobar;", "foobar"),
 ])
 def test_return_statements(input: str, expected_value: object) -> None:
@@ -126,10 +146,16 @@ def assert_identifier(ident: ast.Expression | None, value: str) -> None:
     ) == value, f"ident.token_literal not {value}. got={ident.token_literal()}"
 
 
+def assert_boolean(bool: ast.Expression | None, value: bool) -> None:
+    assert isinstance(
+        bool, ast.Boolean), f"exp not ast.Boolean. got={type(bool)}"
+    assert bool.value == value, f"ident.value not {value}. got={bool.value}"
+
+
 def assert_literal_expression(exp: ast.Expression | None, expected: object) -> None:
     match expected:
         case bool():
-            pytest.fail("boolean literals not implemented yet")
+            assert_boolean(exp, expected)
         case int():
             assert_integer_literal(exp, expected)
         case str():

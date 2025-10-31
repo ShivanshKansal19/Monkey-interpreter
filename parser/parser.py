@@ -36,10 +36,12 @@ class Parser:
         self.peek_token: token.Token = self.l.next_token()
 
         self.prefix_parse_fns: dict[TokenType, prefix_parse_fn] = {
-            TokenType(token.IDENT): self.parse_identifier,
-            TokenType(token.INT): self.parse_integer_literal,
             TokenType(token.BANG): self.parse_prefix_expression,
             TokenType(token.MINUS): self.parse_prefix_expression,
+            TokenType(token.INT): self.parse_integer_literal,
+            TokenType(token.TRUE): self.parse_boolean,
+            TokenType(token.FALSE): self.parse_boolean,
+            TokenType(token.IDENT): self.parse_identifier,
         }
         self.infix_parse_fns: dict[TokenType, infix_parse_fn] = {
             TokenType(token.PLUS): self.parse_infix_expression,
@@ -125,6 +127,9 @@ class Parser:
             return None
         lit.value = value
         return lit
+
+    def parse_boolean(self) -> ast.Boolean:
+        return ast.Boolean(self.cur_token, self.cur_token_is(TokenType(token.TRUE)))
 
     def parse_identifier(self) -> ast.Identifier:
         return ast.Identifier(self.cur_token, self.cur_token.literal)

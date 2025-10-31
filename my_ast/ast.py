@@ -77,6 +77,18 @@ class Identifier(Expression):
         return self.token.literal
 
 
+class Boolean(Expression):
+    def __init__(self, token: token.Token, value: bool) -> None:
+        self.token = token
+        self.value = value
+
+    def __str__(self) -> str:
+        return self.token.literal
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+
 class LetStatement(Statement):
     def __init__(self, token: token.Token, name: Identifier | None = None, value: Expression | None = None) -> None:
         self.token = token
