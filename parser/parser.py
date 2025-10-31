@@ -36,12 +36,13 @@ class Parser:
         self.peek_token: token.Token = self.l.next_token()
 
         self.prefix_parse_fns: dict[TokenType, prefix_parse_fn] = {
-            TokenType(token.BANG): self.parse_prefix_expression,
-            TokenType(token.MINUS): self.parse_prefix_expression,
+            TokenType(token.IDENT): self.parse_identifier,
             TokenType(token.INT): self.parse_integer_literal,
+            TokenType(token.MINUS): self.parse_prefix_expression,
+            TokenType(token.BANG): self.parse_prefix_expression,
+            TokenType(token.LPAREN): self.parse_grouped_expression,
             TokenType(token.TRUE): self.parse_boolean,
             TokenType(token.FALSE): self.parse_boolean,
-            TokenType(token.IDENT): self.parse_identifier,
         }
         self.infix_parse_fns: dict[TokenType, infix_parse_fn] = {
             TokenType(token.PLUS): self.parse_infix_expression,
@@ -128,11 +129,18 @@ class Parser:
         lit.value = value
         return lit
 
-    def parse_boolean(self) -> ast.Boolean:
-        return ast.Boolean(self.cur_token, self.cur_token_is(TokenType(token.TRUE)))
-
     def parse_identifier(self) -> ast.Identifier:
         return ast.Identifier(self.cur_token, self.cur_token.literal)
+
+    def parse_grouped_expression(self) -> ast.Expression | None:
+        self.next_token()
+        exp = self.parse_expression(LOWEST)
+        if not self.expect_peek(TokenType(token.RPAREN)):
+            return None
+        return exp
+
+    def parse_boolean(self) -> ast.Boolean:
+        return ast.Boolean(self.cur_token, self.cur_token_is(TokenType(token.TRUE)))
 
     def parse_let_statement(self) -> ast.LetStatement | None:
         stmt = ast.LetStatement(self.cur_token)
