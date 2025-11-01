@@ -1,5 +1,6 @@
-class TokenType(str):
-    pass
+from typing import NewType
+
+TokenType = NewType('TokenType', str)
 
 
 ILLEGAL = "ILLEGAL"

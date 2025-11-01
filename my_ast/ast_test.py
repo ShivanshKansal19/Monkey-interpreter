@@ -13,4 +13,4 @@ def test_str():
         )
     ])
 
-    assert str(program) == "let myVar = anotherVar;"
+    assert str(program) == "let myVar = anotherVar;\n"
