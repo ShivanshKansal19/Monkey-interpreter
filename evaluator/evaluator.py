@@ -20,6 +20,10 @@ def eval(node: ast.Node | None) -> object.Object:
     elif isinstance(node, ast.PrefixExpression):
         right = eval(node.right)
         return eval_prefix_expression(node.operator, right)
+    elif isinstance(node, ast.InfixExpression):
+        left = eval(node.left)
+        right = eval(node.right)
+        return eval_infix_expression(node.operator, left, right)
     return NULL
 
 
@@ -56,6 +60,40 @@ def eval_minus_prefix_operator_expression(right: object.Object) -> object.Object
         return NULL
     value = right.value
     return object.Integer(-value)
+
+
+def eval_infix_expression(operator: str, left: object.Object, right: object.Object) -> object.Object:
+    if isinstance(left, object.Integer) and isinstance(right, object.Integer):
+        return eval_integer_infix_expression(operator, left, right)
+    elif operator == "==":
+        return native_bool_to_boolean_object(left == right)
+    elif operator == "!=":
+        return native_bool_to_boolean_object(left != right)
+    else:
+        return NULL
+
+
+def eval_integer_infix_expression(operator: str, left: object.Integer, right: object.Integer) -> object.Object:
+    left_val, right_val = left.value, right.value
+    match operator:
+        case '+':
+            return object.Integer(left_val+right_val)
+        case '-':
+            return object.Integer(left_val-right_val)
+        case '*':
+            return object.Integer(left_val*right_val)
+        case '/':
+            return object.Integer(left_val//right_val)
+        case '<':
+            return native_bool_to_boolean_object(left_val < right_val)
+        case '>':
+            return native_bool_to_boolean_object(left_val > right_val)
+        case '==':
+            return native_bool_to_boolean_object(left_val == right_val)
+        case '!=':
+            return native_bool_to_boolean_object(left_val != right_val)
+        case _:
+            return NULL
 
 
 def native_bool_to_boolean_object(input: bool) -> object.Boolean:

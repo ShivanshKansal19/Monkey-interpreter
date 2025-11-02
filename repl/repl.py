@@ -81,7 +81,7 @@ def print_parse_tree(out: TextIO, node: ast.Node, indent_width: int = 4, line_sp
     def _write_line(node: ast.Node, indent: str = '', name: str = '') -> None:
         class_name = type(node).__name__
         if isinstance(node, ast.Program):
-            class_name = Fore.LIGHTRED_EX + class_name + Fore.RESET
+            class_name = Fore.LIGHTWHITE_EX + class_name + Fore.RESET
         elif isinstance(node, (ast.IntegerLiteral, ast.Boolean)):
             class_name = f"{Fore.LIGHTGREEN_EX}{class_name} ({Fore.YELLOW}{str(node.value)}{Fore.LIGHTGREEN_EX}){Fore.RESET}"
         elif isinstance(node, ast.Identifier):
@@ -91,7 +91,7 @@ def print_parse_tree(out: TextIO, node: ast.Node, indent_width: int = 4, line_sp
         elif isinstance(node, ast.Statement):
             class_name = f"{Fore.LIGHTCYAN_EX}{class_name}{Fore.RESET}  "
         else:
-            class_name = f"{Fore.YELLOW}{class_name}{Fore.RESET}"
+            class_name = f"{Fore.LIGHTRED_EX}{class_name}{Fore.RESET}"
         name = f"\033[3;90m{name}\033[0m: " if name else ""
         out.write(indent + name + class_name + "\n")
 
