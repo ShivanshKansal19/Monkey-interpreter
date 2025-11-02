@@ -37,7 +37,7 @@ class Boolean(Object):
         return BOOLEAN_OBJ
 
     def inspect(self) -> str:
-        return str(self.value)
+        return 'true' if self.value else 'false'
 
 
 class Null(Object):

@@ -25,7 +25,7 @@ precedences: dict[TokenType, int] = {
 }
 
 prefix_parse_fn = Callable[[], ast.Expression | None]
-infix_parse_fn = Callable[[ast.Expression | None], ast.Expression]
+infix_parse_fn = Callable[[ast.Expression], ast.Expression]
 
 
 class Parser:
@@ -104,6 +104,8 @@ class Parser:
             if infix is None:
                 return left_exp
             self.next_token()
+            if left_exp is None:
+                return None
             left_exp = infix(left_exp)
         return left_exp
 
@@ -114,7 +116,7 @@ class Parser:
         expression.right = self.parse_expression(PREFIX)
         return expression
 
-    def parse_infix_expression(self, left: ast.Expression | None) -> ast.Expression:
+    def parse_infix_expression(self, left: ast.Expression) -> ast.Expression:
         expression = ast.InfixExpression(
             self.cur_token, left, self.cur_token.literal)
         precedence = self.cur_precedence()
@@ -132,7 +134,7 @@ class Parser:
         lit = ast.IntegerLiteral(self.cur_token, value)
         return lit
 
-    def parse_call_expression(self, function: ast.Expression | None) -> ast.CallExpression:
+    def parse_call_expression(self, function: ast.Expression) -> ast.CallExpression:
         exp = ast.CallExpression(self.cur_token, function)
         exp.arguments = self.parse_call_arguments()
         return exp
@@ -233,7 +235,7 @@ class Parser:
             self.next_token()
         return stmt
 
-    def parse_return_statement(self) -> ast.ReturnStatement | None:
+    def parse_return_statement(self) -> ast.ReturnStatement:
         stmt = ast.ReturnStatement(self.cur_token)
         self.next_token()
         stmt.return_value = self.parse_expression(LOWEST)

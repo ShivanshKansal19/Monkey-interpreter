@@ -113,7 +113,7 @@ class FunctionLiteral(Expression):
 
 
 class CallExpression(Expression):
-    def __init__(self, token: token.Token, function: Expression | None = None, arguments: list[Expression] | None = None) -> None:
+    def __init__(self, token: token.Token, function: Expression, arguments: list[Expression] | None = None) -> None:
         self.token = token
         self.function = function
         self.arguments = arguments if arguments is not None else []
