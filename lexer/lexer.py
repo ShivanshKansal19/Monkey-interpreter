@@ -31,31 +31,31 @@ class Lexer:
                 if self.peek_char() == '=':
                     ch = self.ch
                     self.read_char()
-                    tok = Token(TokenType(EQ), ch+self.ch)
+                    tok = Token(EQ, ch+self.ch)
                 else:
-                    tok = Token(TokenType(ASSIGN), self.ch)
-            case '+': tok = Token(TokenType(PLUS), self.ch)
-            case '-': tok = Token(TokenType(MINUS), self.ch)
+                    tok = Token(ASSIGN, self.ch)
+            case '+': tok = Token(PLUS, self.ch)
+            case '-': tok = Token(MINUS, self.ch)
             case '!':
                 if self.peek_char() == '=':
                     ch = self.ch
                     self.read_char()
-                    tok = Token(TokenType(NOT_EQ), ch+self.ch)
+                    tok = Token(NOT_EQ, ch+self.ch)
                 else:
-                    tok = Token(TokenType(BANG), self.ch)
-            case '*': tok = Token(TokenType(ASTERISK), self.ch)
-            case '/': tok = Token(TokenType(SLASH), self.ch)
-            case '<': tok = Token(TokenType(LT), self.ch)
-            case '>': tok = Token(TokenType(GT), self.ch)
+                    tok = Token(BANG, self.ch)
+            case '*': tok = Token(ASTERISK, self.ch)
+            case '/': tok = Token(SLASH, self.ch)
+            case '<': tok = Token(LT, self.ch)
+            case '>': tok = Token(GT, self.ch)
             # Delimiters
-            case ';': tok = Token(TokenType(SEMICOLON), self.ch)
-            case ',': tok = Token(TokenType(COMMA), self.ch)
-            case '(': tok = Token(TokenType(LPAREN), self.ch)
-            case ')': tok = Token(TokenType(RPAREN), self.ch)
-            case '{': tok = Token(TokenType(LBRACE), self.ch)
-            case '}': tok = Token(TokenType(RBRACE), self.ch)
+            case ';': tok = Token(SEMICOLON, self.ch)
+            case ',': tok = Token(COMMA, self.ch)
+            case '(': tok = Token(LPAREN, self.ch)
+            case ')': tok = Token(RPAREN, self.ch)
+            case '{': tok = Token(LBRACE, self.ch)
+            case '}': tok = Token(RBRACE, self.ch)
             # EOF
-            case '': tok = Token(TokenType(EOF), '')
+            case '': tok = Token(EOF, '')
             case _:
                 if self.ch.isalpha() or self.ch == '_':
                     literal = self.read_identifier()
@@ -63,10 +63,10 @@ class Lexer:
                     tok = Token(token_type, literal)
                     return tok
                 elif self.ch.isdigit():
-                    tok = Token(TokenType(INT), self.read_number())
+                    tok = Token(INT, self.read_number())
                     return tok
                 else:
-                    tok = Token(TokenType(ILLEGAL), self.ch)
+                    tok = Token(ILLEGAL, self.ch)
         self.read_char()
         return tok
 

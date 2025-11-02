@@ -55,7 +55,7 @@ class ExpressionStatement(Statement):
 
 
 class IntegerLiteral(Expression):
-    def __init__(self, token: token.Token, value: int | None = None) -> None:
+    def __init__(self, token: token.Token, value: int) -> None:
         self.token = token
         self.value = value
 

@@ -2,7 +2,7 @@ import pytest
 from my_ast import ast
 from lexer import lexer
 from my_token.token import *
-from . import parser
+from parser import parser
 
 
 @pytest.mark.parametrize("input, expected", [

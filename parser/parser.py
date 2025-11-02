@@ -13,15 +13,15 @@ PREFIX = 6  # -X or !X
 CALL = 7  # myFunction(X)
 
 precedences: dict[TokenType, int] = {
-    TokenType(token.EQ): EQUALS,
-    TokenType(token.NOT_EQ): EQUALS,
-    TokenType(token.LT): LESSGREATER,
-    TokenType(token.GT): LESSGREATER,
-    TokenType(token.PLUS): SUM,
-    TokenType(token.MINUS): SUM,
-    TokenType(token.SLASH): PRODUCT,
-    TokenType(token.ASTERISK): PRODUCT,
-    TokenType(token.LPAREN): CALL,
+    token.EQ: EQUALS,
+    token.NOT_EQ: EQUALS,
+    token.LT: LESSGREATER,
+    token.GT: LESSGREATER,
+    token.PLUS: SUM,
+    token.MINUS: SUM,
+    token.SLASH: PRODUCT,
+    token.ASTERISK: PRODUCT,
+    token.LPAREN: CALL,
 }
 
 prefix_parse_fn = Callable[[], ast.Expression | None]
@@ -36,27 +36,27 @@ class Parser:
         self.cur_token: token.Token = self.l.next_token()
         self.peek_token: token.Token = self.l.next_token()
 
-        self.prefix_parse_fns: dict[TokenType, prefix_parse_fn] = {
-            TokenType(token.IDENT): self.parse_identifier,
-            TokenType(token.INT): self.parse_integer_literal,
-            TokenType(token.MINUS): self.parse_prefix_expression,
-            TokenType(token.BANG): self.parse_prefix_expression,
-            TokenType(token.LPAREN): self.parse_grouped_expression,
-            TokenType(token.FUNCTION): self.parse_function_literal,
-            TokenType(token.TRUE): self.parse_boolean,
-            TokenType(token.FALSE): self.parse_boolean,
-            TokenType(token.IF): self.parse_if_expression,
+        self.prefix_parse_fns: dict[token.TokenType, prefix_parse_fn] = {
+            token.IDENT: self.parse_identifier,
+            token.INT: self.parse_integer_literal,
+            token.MINUS: self.parse_prefix_expression,
+            token.BANG: self.parse_prefix_expression,
+            token.LPAREN: self.parse_grouped_expression,
+            token.FUNCTION: self.parse_function_literal,
+            token.TRUE: self.parse_boolean,
+            token.FALSE: self.parse_boolean,
+            token.IF: self.parse_if_expression,
         }
-        self.infix_parse_fns: dict[TokenType, infix_parse_fn] = {
-            TokenType(token.PLUS): self.parse_infix_expression,
-            TokenType(token.MINUS): self.parse_infix_expression,
-            TokenType(token.SLASH): self.parse_infix_expression,
-            TokenType(token.ASTERISK): self.parse_infix_expression,
-            TokenType(token.EQ): self.parse_infix_expression,
-            TokenType(token.NOT_EQ): self.parse_infix_expression,
-            TokenType(token.LT): self.parse_infix_expression,
-            TokenType(token.GT): self.parse_infix_expression,
-            TokenType(token.LPAREN): self.parse_call_expression,
+        self.infix_parse_fns: dict[token.TokenType, infix_parse_fn] = {
+            token.PLUS: self.parse_infix_expression,
+            token.MINUS: self.parse_infix_expression,
+            token.SLASH: self.parse_infix_expression,
+            token.ASTERISK: self.parse_infix_expression,
+            token.EQ: self.parse_infix_expression,
+            token.NOT_EQ: self.parse_infix_expression,
+            token.LT: self.parse_infix_expression,
+            token.GT: self.parse_infix_expression,
+            token.LPAREN: self.parse_call_expression,
         }
 
     def register_prefix(self, token_type: TokenType, fn: prefix_parse_fn) -> None:
@@ -89,7 +89,7 @@ class Parser:
     def parse_expression_statement(self) -> ast.ExpressionStatement:
         stmt = ast.ExpressionStatement(self.cur_token)
         stmt.expression = self.parse_expression(LOWEST)
-        if self.peek_token_is(TokenType(token.SEMICOLON)):
+        if self.peek_token_is(token.SEMICOLON):
             self.next_token()
         return stmt
 
@@ -99,7 +99,7 @@ class Parser:
             self.no_prefix_parse_error(self.cur_token.type)
             return None
         left_exp = prefix()
-        while not self.peek_token_is(TokenType(token.SEMICOLON)) and precedence < self.peek_precedence():
+        while not self.peek_token_is(token.SEMICOLON) and precedence < self.peek_precedence():
             infix = self.infix_parse_fns.get(self.peek_token.type)
             if infix is None:
                 return left_exp
@@ -123,14 +123,13 @@ class Parser:
         return expression
 
     def parse_integer_literal(self) -> ast.IntegerLiteral | None:
-        lit = ast.IntegerLiteral(self.cur_token)
         try:
             value = int(self.cur_token.literal)
         except Exception:
             msg = f"could not parse {self.cur_token.literal} as integer"
             self.errors.append(msg)
             return None
-        lit.value = value
+        lit = ast.IntegerLiteral(self.cur_token, value)
         return lit
 
     def parse_call_expression(self, function: ast.Expression | None) -> ast.CallExpression:
@@ -140,16 +139,16 @@ class Parser:
 
     def parse_call_arguments(self) -> list[ast.Expression]:
         args = []
-        if self.peek_token_is(TokenType(token.RPAREN)):
+        if self.peek_token_is(token.RPAREN):
             self.next_token()
             return args
         self.next_token()
         args.append(self.parse_expression(LOWEST))
-        while self.peek_token_is(TokenType(token.COMMA)):
+        while self.peek_token_is(token.COMMA):
             self.next_token()
             self.next_token()
             args.append(self.parse_expression(LOWEST))
-        if not self.expect_peek(TokenType(token.RPAREN)):
+        if not self.expect_peek(token.RPAREN):
             return []
         return args
 
@@ -159,54 +158,54 @@ class Parser:
     def parse_grouped_expression(self) -> ast.Expression | None:
         self.next_token()
         exp = self.parse_expression(LOWEST)
-        if not self.expect_peek(TokenType(token.RPAREN)):
+        if not self.expect_peek(token.RPAREN):
             return None
         return exp
 
     def parse_function_literal(self) -> ast.FunctionLiteral | None:
         lit = ast.FunctionLiteral(self.cur_token)
-        if not self.expect_peek(TokenType(token.LPAREN)):
+        if not self.expect_peek(token.LPAREN):
             return None
         lit.parameters = self.parse_function_parameters()
-        if not self.expect_peek(TokenType(token.LBRACE)):
+        if not self.expect_peek(token.LBRACE):
             return None
         lit.body = self.parse_block_statement()
         return lit
 
     def parse_function_parameters(self) -> list[ast.Identifier]:
         identifiers: list[ast.Identifier] = []
-        if self.peek_token_is(TokenType(token.RPAREN)):
+        if self.peek_token_is(token.RPAREN):
             self.next_token()
             return identifiers
         self.next_token()
         ident = ast.Identifier(self.cur_token, self.cur_token.literal)
         identifiers.append(ident)
-        while self.peek_token_is(TokenType(token.COMMA)):
+        while self.peek_token_is(token.COMMA):
             self.next_token()
             self.next_token()
             ident = ast.Identifier(self.cur_token, self.cur_token.literal)
             identifiers.append(ident)
-        if not self.expect_peek(TokenType(token.RPAREN)):
+        if not self.expect_peek(token.RPAREN):
             return []
         return identifiers
 
     def parse_boolean(self) -> ast.Boolean:
-        return ast.Boolean(self.cur_token, self.cur_token_is(TokenType(token.TRUE)))
+        return ast.Boolean(self.cur_token, self.cur_token_is(token.TRUE))
 
     def parse_if_expression(self) -> ast.IfExpression | None:
         expression = ast.IfExpression(self.cur_token)
-        if not self.expect_peek(TokenType(token.LPAREN)):
+        if not self.expect_peek(token.LPAREN):
             return None
         self.next_token()
         expression.condition = self.parse_expression(LOWEST)
-        if not self.expect_peek(TokenType(token.RPAREN)):
+        if not self.expect_peek(token.RPAREN):
             return None
-        if not self.expect_peek(TokenType(token.LBRACE)):
+        if not self.expect_peek(token.LBRACE):
             return None
         expression.consequence = self.parse_block_statement()
-        if self.peek_token_is(TokenType(token.ELSE)):
+        if self.peek_token_is(token.ELSE):
             self.next_token()
-            if not self.expect_peek(TokenType(token.LBRACE)):
+            if not self.expect_peek(token.LBRACE):
                 return None
             expression.alternative = self.parse_block_statement()
         return expression
@@ -214,7 +213,7 @@ class Parser:
     def parse_block_statement(self) -> ast.BlockStatement:
         block = ast.BlockStatement(self.cur_token)
         self.next_token()
-        while not self.cur_token_is(TokenType(token.RBRACE)) and not self.cur_token_is(TokenType(token.EOF)):
+        while not self.cur_token_is(token.RBRACE) and not self.cur_token_is(token.EOF):
             stmt = self.parse_statement()
             if stmt is not None:
                 block.statements.append(stmt)
@@ -223,14 +222,14 @@ class Parser:
 
     def parse_let_statement(self) -> ast.LetStatement | None:
         stmt = ast.LetStatement(self.cur_token)
-        if not self.expect_peek(TokenType(token.IDENT)):
+        if not self.expect_peek(token.IDENT):
             return None
         stmt.name = ast.Identifier(self.cur_token, self.cur_token.literal)
-        if not self.expect_peek(TokenType(token.ASSIGN)):
+        if not self.expect_peek(token.ASSIGN):
             return None
         self.next_token()
         stmt.value = self.parse_expression(LOWEST)
-        if self.peek_token_is(TokenType(token.SEMICOLON)):
+        if self.peek_token_is(token.SEMICOLON):
             self.next_token()
         return stmt
 
@@ -238,7 +237,7 @@ class Parser:
         stmt = ast.ReturnStatement(self.cur_token)
         self.next_token()
         stmt.return_value = self.parse_expression(LOWEST)
-        if self.peek_token_is(TokenType(token.SEMICOLON)):
+        if self.peek_token_is(token.SEMICOLON):
             self.next_token()
         return stmt
 

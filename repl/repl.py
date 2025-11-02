@@ -3,6 +3,8 @@ from lexer import lexer
 from parser import parser
 from my_token import token
 from my_ast import ast
+from evaluator import evaluator
+from colorama import Fore
 
 MONKEY_FACE = r'''            __,__
    .--.  .-"     "-.  .--.
@@ -21,19 +23,28 @@ MONKEY_FACE = r'''            __,__
 prompt = ">>"
 
 
-def start(inp: TextIO, out: TextIO) -> None:
+def start(inp: TextIO, out: TextIO, mode: str) -> None:
     while True:
         out.write(prompt)
         out.flush()
         line = inp.readline().strip()
         if not line:
             break
-        print_parsed_program(out, line)
+        print_program(out, line, mode)
 
 
-def interpret_file(file: TextIO, out: TextIO) -> None:
+def interpret_file(file: TextIO, out: TextIO, mode: str) -> None:
     source = file.read()
-    print_parsed_program(out, source)
+    print_program(out, source, mode)
+
+
+def print_program(out: TextIO, source: str, mode: str) -> None:
+    if mode == 'l':
+        print_lexer_tokens(out, source)
+    elif mode == 'p':
+        print_parsed_program(out, source)
+    elif mode == 'e':
+        print_evaluated_program(out, source)
 
 
 def print_lexer_tokens(out: TextIO, source: str) -> None:
@@ -70,17 +81,17 @@ def print_parse_tree(out: TextIO, node: ast.Node, indent_width: int = 4, line_sp
     def _write_line(node: ast.Node, indent: str = '', name: str = '') -> None:
         class_name = type(node).__name__
         if isinstance(node, ast.Program):
-            class_name = f"\033[0;91m{class_name}\033[0m"
+            class_name = Fore.LIGHTRED_EX + class_name + Fore.RESET
         elif isinstance(node, (ast.IntegerLiteral, ast.Boolean)):
-            class_name = f"\033[0;92m{class_name} (\033[0;33m{str(node.value)}\033[0;92m)\033[0m"
+            class_name = f"{Fore.LIGHTGREEN_EX}{class_name} ({Fore.YELLOW}{str(node.value)}{Fore.LIGHTGREEN_EX}){Fore.RESET}"
         elif isinstance(node, ast.Identifier):
-            class_name = f"\033[0;94m{class_name} (\033[0;33m'{node.value}'\033[0;94m)\033[0m"
+            class_name = f"{Fore.LIGHTBLUE_EX}{class_name} ({Fore.YELLOW}'{node.value}'{Fore.LIGHTBLUE_EX}){Fore.RESET}"
         elif isinstance(node, (ast.PrefixExpression, ast.InfixExpression)):
-            class_name = f"\033[0;95m{class_name} (\033[0;33m'{node.operator}'\033[0;95m)\033[0m"
+            class_name = f"{Fore.LIGHTMAGENTA_EX}{class_name} ({Fore.YELLOW}'{node.operator}'{Fore.LIGHTMAGENTA_EX}){Fore.RESET}"
         elif isinstance(node, ast.Statement):
-            class_name = f"\033[0;96m{class_name}\033[0m"
+            class_name = f"{Fore.LIGHTCYAN_EX}{class_name}{Fore.RESET}  "
         else:
-            class_name = f"\033[0;93m{class_name}\033[0m"
+            class_name = f"{Fore.YELLOW}{class_name}{Fore.RESET}"
         name = f"\033[3;90m{name}\033[0m: " if name else ""
         out.write(indent + name + class_name + "\n")
 
@@ -119,3 +130,15 @@ def print_parse_tree(out: TextIO, node: ast.Node, indent_width: int = 4, line_sp
 
     _write_line(node)
     _print_parse_tree(node)
+
+
+def print_evaluated_program(out: TextIO, source: str) -> None:
+    l = lexer.Lexer(source)
+    p = parser.Parser(l)
+    program = p.parse_program()
+    if len(p.errors) != 0:
+        print_parser_errors(out, p.errors)
+        return
+    evaluated = evaluator.eval(program)
+    if evaluated is not None:
+        out.write(evaluated.inspect() + '\n')

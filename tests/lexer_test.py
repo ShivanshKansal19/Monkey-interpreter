@@ -1,6 +1,6 @@
 import pytest
 from my_token import token
-from . import lexer
+from lexer import lexer
 
 
 @pytest.mark.parametrize(
