@@ -6,6 +6,8 @@ ObjectType = NewType('ObjectType', str)
 INTEGER_OBJ = ObjectType('INTEGER')
 BOOLEAN_OBJ = ObjectType('BOOLEAN')
 NULL_OBJ = ObjectType('NULL')
+RETURN_VALUE_OBJ = ObjectType('RETURN_VALUE')
+ERROR_OBJ = ObjectType('ERROR')
 
 
 class Object(ABC):
@@ -42,10 +44,32 @@ class Boolean(Object):
 
 class Null(Object):
     def __init__(self) -> None:
-        self.value = 'null'
+        pass
 
     def type(self) -> ObjectType:
         return NULL_OBJ
 
     def inspect(self) -> str:
-        return self.value
+        return 'null'
+
+
+class ReturnValue(Object):
+    def __init__(self, value: Object) -> None:
+        self.value = value
+
+    def type(self) -> ObjectType:
+        return RETURN_VALUE_OBJ
+
+    def inspect(self) -> str:
+        return self.value.inspect()
+
+
+class Error(Object):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def type(self) -> ObjectType:
+        return ERROR_OBJ
+
+    def inspect(self) -> str:
+        return "ERROR: "+self.message

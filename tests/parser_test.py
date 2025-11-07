@@ -212,7 +212,7 @@ def test_return_statements(input: str, expected_value: object) -> None:
     assert_literal_expression(stmt.return_value, expected_value)
 
 
-# Helper functions for assertions and program creation
+# Helper functions
 
 def assert_expression_statement(stmt: ast.Statement) -> ast.Expression | None:
     assert isinstance(
