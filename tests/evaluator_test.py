@@ -1,5 +1,5 @@
 from lexer import lexer
-from object import object
+from object import object, environment
 from parser import parser
 from evaluator import evaluator
 import pytest
@@ -104,6 +104,17 @@ def test_return_statements(input: str, expected: int) -> None:
     assert_integer_object(evaluated, expected)
 
 
+@pytest.mark.parametrize('input, expected', [
+    ("let a = 5; a;", 5),
+    ("let a = 5 * 5; a;", 25),
+    ("let a = 5; let b = a; b;", 5),
+    ("let a = 5; let b = a; let c = a + b + 5; c;", 15),
+])
+def test_let_statements(input: str, expected: int) -> None:
+    evaluated = eval_input(input)
+    assert_integer_object(evaluated, expected)
+
+
 @pytest.mark.parametrize('input, expected_message', [
     ("5 + true;", "type mismatch: INTEGER + BOOLEAN"),
     ("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"),
@@ -119,6 +130,7 @@ def test_return_statements(input: str, expected: int) -> None:
         return 1;
     }
     ''', "unknown operator: BOOLEAN + BOOLEAN"),
+    ("foobar", "identifier not found: foobar"),
 ])
 def test_error_handling(input: str, expected_message: str) -> None:
     evaluated = eval_input(input)
@@ -150,4 +162,5 @@ def eval_input(input: str) -> object.Object | None:
     l = lexer.Lexer(input)
     p = parser.Parser(l)
     program = p.parse_program()
-    return evaluator.eval(program)
+    env = environment.Environment()
+    return evaluator.eval(program, env)

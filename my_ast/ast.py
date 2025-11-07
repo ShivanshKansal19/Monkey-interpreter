@@ -124,7 +124,7 @@ class CallExpression(Expression):
 
 
 class LetStatement(Statement):
-    def __init__(self, token: token.Token, name: Identifier | None = None, value: Expression | None = None) -> None:
+    def __init__(self, token: token.Token, name: Identifier, value: Expression | None = None) -> None:
         self.token = token
         self.name = name
         self.value = value

@@ -1,4 +1,4 @@
-from object import object
+from object import object, environment
 from my_ast import ast
 
 NULL = object.Null()
@@ -6,49 +6,57 @@ TRUE = object.Boolean(True)
 FALSE = object.Boolean(False)
 
 
-def eval(node: ast.Node | None) -> object.Object:
+def eval(node: ast.Node | None, env: environment.Environment) -> object.Object:
     match node:
         # Statements
         case ast.Program():
-            return eval_program(node)
+            return eval_program(node, env)
         case ast.ExpressionStatement():
-            return eval(node.expression)
+            return eval(node.expression, env)
         case ast.BlockStatement():
-            return eval_block_statement(node)
+            return eval_block_statement(node, env)
         case ast.ReturnStatement():
-            val = eval(node.return_value)
+            val = eval(node.return_value, env)
             if is_error(val):
                 return val
             return object.ReturnValue(val)
+        case ast.LetStatement():
+            val = eval(node.value, env)
+            if is_error(val):
+                return val
+            env.set(node.name.value, val)
+            return NULL
 
         # Expressions
         case ast.IntegerLiteral():
             return object.Integer(node.value)
         case ast.Boolean():
             return native_bool_to_boolean_object(node.value)
+        case ast.Identifier():
+            return eval_identifier(node, env)
         case ast.PrefixExpression():
-            right = eval(node.right)
+            right = eval(node.right, env)
             if is_error(right):
                 return right
             return eval_prefix_expression(node.operator, right)
         case ast.InfixExpression():
-            left = eval(node.left)
+            left = eval(node.left, env)
             if is_error(left):
                 return left
-            right = eval(node.right)
+            right = eval(node.right, env)
             if is_error(right):
                 return right
             return eval_infix_expression(node.operator, left, right)
         case ast.IfExpression():
-            return eval_if_expression(node)
+            return eval_if_expression(node, env)
         case _:
             return NULL
 
 
-def eval_program(stmts: ast.Program) -> object.Object:
+def eval_program(stmts: ast.Program, env: environment.Environment) -> object.Object:
     result = NULL
     for stmt in stmts.statements:
-        result = eval(stmt)
+        result = eval(stmt, env)
         match result:
             case object.ReturnValue():
                 return result.value
@@ -57,14 +65,21 @@ def eval_program(stmts: ast.Program) -> object.Object:
     return result
 
 
-def eval_block_statement(block: ast.BlockStatement) -> object.Object:
+def eval_block_statement(block: ast.BlockStatement, env: environment.Environment) -> object.Object:
     result = NULL
     for stmt in block.statements:
-        result = eval(stmt)
+        result = eval(stmt, env)
         rt = result.type()
         if rt == object.RETURN_VALUE_OBJ or rt == object.ERROR_OBJ:
             return result
     return result
+
+
+def eval_identifier(node: ast.Identifier, env: environment.Environment) -> object.Object:
+    val = env.get(node.value)
+    if val is None:
+        return object.Error(f"identifier not found: {node.value}")
+    return val
 
 
 def eval_prefix_expression(operator: str, right: object.Object) -> object.Object:
@@ -127,14 +142,14 @@ def eval_integer_infix_expression(operator: str, left: object.Integer, right: ob
             return object.Error(f"unknown operator: {left.type()} {operator} {right.type()}")
 
 
-def eval_if_expression(ie: ast.IfExpression) -> object.Object:
-    condition = eval(ie.condition)
+def eval_if_expression(ie: ast.IfExpression, env: environment.Environment) -> object.Object:
+    condition = eval(ie.condition, env)
     if is_error(condition):
         return condition
     if is_truthy(condition):
-        return eval(ie.consequence)
+        return eval(ie.consequence, env)
     elif ie.alternative is not None:
-        return eval(ie.alternative)
+        return eval(ie.alternative, env)
     else:
         return NULL
 

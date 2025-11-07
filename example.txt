@@ -6,7 +6,9 @@ let add = fn(x, y) {
 };
 
 let result = add(five, ten);
-5 < 10 > 5
+
+let a=1;
+let b=1;
 
 if (5 < 10) {
     a==b;
@@ -14,8 +16,3 @@ if (5 < 10) {
 } else {
     return false;
 }
-
-10 == 10;
-10 != 9;
-
--1 == 1-2

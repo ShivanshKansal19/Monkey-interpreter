@@ -4,6 +4,7 @@ from parser import parser
 from my_token import token
 from my_ast import ast
 from evaluator import evaluator
+from object import object, environment
 from colorama import Fore
 
 MONKEY_FACE = r'''            __,__
@@ -24,27 +25,29 @@ prompt = ">>"
 
 
 def start(inp: TextIO, out: TextIO, mode: str) -> None:
+    env = environment.Environment()
     while True:
         out.write(prompt)
         out.flush()
         line = inp.readline().strip()
         if not line:
             break
-        print_program(out, line, mode)
+        print_program(out, line, mode, env)
 
 
 def interpret_file(file: TextIO, out: TextIO, mode: str) -> None:
     source = file.read()
-    print_program(out, source, mode)
+    env = environment.Environment()
+    print_program(out, source, mode, env)
 
 
-def print_program(out: TextIO, source: str, mode: str) -> None:
+def print_program(out: TextIO, source: str, mode: str, env: environment.Environment) -> None:
     if mode == 'l':
         print_lexer_tokens(out, source)
     elif mode == 'p':
         print_parsed_program(out, source)
     elif mode == 'e':
-        print_evaluated_program(out, source)
+        print_evaluated_program(out, source, env)
 
 
 def print_lexer_tokens(out: TextIO, source: str) -> None:
@@ -132,13 +135,13 @@ def print_parse_tree(out: TextIO, node: ast.Node, indent_width: int = 4, line_sp
     _print_parse_tree(node)
 
 
-def print_evaluated_program(out: TextIO, source: str) -> None:
+def print_evaluated_program(out: TextIO, source: str, env: environment.Environment) -> None:
     l = lexer.Lexer(source)
     p = parser.Parser(l)
     program = p.parse_program()
     if len(p.errors) != 0:
         print_parser_errors(out, p.errors)
         return
-    evaluated = evaluator.eval(program)
-    if evaluated is not None:
+    evaluated = evaluator.eval(program, env)
+    if not isinstance(evaluated, object.Null):
         out.write(evaluated.inspect() + '\n')

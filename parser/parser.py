@@ -223,17 +223,17 @@ class Parser:
         return block
 
     def parse_let_statement(self) -> ast.LetStatement | None:
-        stmt = ast.LetStatement(self.cur_token)
+        my_token = self.cur_token
         if not self.expect_peek(token.IDENT):
             return None
-        stmt.name = ast.Identifier(self.cur_token, self.cur_token.literal)
+        name = ast.Identifier(self.cur_token, self.cur_token.literal)
         if not self.expect_peek(token.ASSIGN):
             return None
         self.next_token()
-        stmt.value = self.parse_expression(LOWEST)
+        value = self.parse_expression(LOWEST)
         if self.peek_token_is(token.SEMICOLON):
             self.next_token()
-        return stmt
+        return ast.LetStatement(my_token, name, value)
 
     def parse_return_statement(self) -> ast.ReturnStatement:
         stmt = ast.ReturnStatement(self.cur_token)
