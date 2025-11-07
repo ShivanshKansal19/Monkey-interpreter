@@ -34,6 +34,18 @@ def eval(node: ast.Node | None, env: environment.Environment) -> object.Object:
             return native_bool_to_boolean_object(node.value)
         case ast.Identifier():
             return eval_identifier(node, env)
+        case ast.FunctionLiteral():
+            params = node.parameters
+            body = node.body
+            return object.Function(params, env, body)
+        case ast.CallExpression():
+            function = eval(node.function, env)
+            if is_error(function):
+                return function
+            args = eval_expressions(node.arguments, env)
+            if len(args) == 1 and is_error(args[0]):
+                return args[0]
+            return apply_function(function, args)
         case ast.PrefixExpression():
             right = eval(node.right, env)
             if is_error(right):
@@ -80,6 +92,37 @@ def eval_identifier(node: ast.Identifier, env: environment.Environment) -> objec
     if val is None:
         return object.Error(f"identifier not found: {node.value}")
     return val
+
+
+def eval_expressions(exps: list[ast.Expression], env: environment.Environment) -> list[object.Object]:
+    result: list[object.Object] = []
+    for e in exps:
+        evaluated = eval(e, env)
+        if is_error(evaluated):
+            return [evaluated]
+        result.append(evaluated)
+    return result
+
+
+def apply_function(fn: object.Object, args: list[object.Object]) -> object.Object:
+    if not isinstance(fn, object.Function):
+        return object.Error(f"not a function: {fn.type()}")
+    extended_env = extend_function_env(fn, args)
+    evaluated = eval(fn.body, extended_env)
+    return unwrap_return_value(evaluated)
+
+
+def extend_function_env(fn: object.Function, args: list[object.Object]) -> environment.Environment:
+    env = environment.Environment(fn.env)
+    for param_idx, param in enumerate(fn.parameters):
+        env.set(param.value, args[param_idx])
+    return env
+
+
+def unwrap_return_value(obj: object.Object) -> object.Object:
+    if isinstance(obj, object.ReturnValue):
+        return obj.value
+    return obj
 
 
 def eval_prefix_expression(operator: str, right: object.Object) -> object.Object:

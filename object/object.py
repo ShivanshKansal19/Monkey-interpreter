@@ -1,5 +1,6 @@
 from typing import NewType
 from abc import ABC, abstractmethod
+from my_ast import ast
 
 ObjectType = NewType('ObjectType', str)
 
@@ -8,6 +9,7 @@ BOOLEAN_OBJ = ObjectType('BOOLEAN')
 NULL_OBJ = ObjectType('NULL')
 RETURN_VALUE_OBJ = ObjectType('RETURN_VALUE')
 ERROR_OBJ = ObjectType('ERROR')
+FUNCTION_OBJ = ObjectType('FUNCTION')
 
 
 class Object(ABC):
@@ -62,6 +64,22 @@ class ReturnValue(Object):
 
     def inspect(self) -> str:
         return self.value.inspect()
+
+
+class Function(Object):
+    from object import environment
+
+    def __init__(self, parameters: list[ast.Identifier], env: environment.Environment, body: ast.BlockStatement) -> None:
+        self.parameters = parameters
+        self.env = env
+        self.body = body
+
+    def type(self) -> ObjectType:
+        return FUNCTION_OBJ
+
+    def inspect(self) -> str:
+        params = ', '.join(map(str, self.parameters))
+        return f"fn({params}) {{\n{str(self.body)}\n}}"
 
 
 class Error(Object):

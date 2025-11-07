@@ -51,7 +51,7 @@ class ExpressionStatement(Statement):
         self.expression = expression
 
     def __str__(self) -> str:
-        return str(self.expression)+';\n' if self.expression is not None else ';\n'
+        return str(self.expression) if self.expression is not None else ''
 
 
 class IntegerLiteral(Expression):
@@ -87,7 +87,7 @@ class BlockStatement(Statement):
         self.statements = statements if statements is not None else []
 
     def __str__(self) -> str:
-        return '{\n\t'+'\t'.join(map(str, self.statements))+'}'
+        return ''.join(map(str, self.statements))
 
 
 class IfExpression(Expression):
@@ -98,17 +98,17 @@ class IfExpression(Expression):
         self.alternative = alternative
 
     def __str__(self) -> str:
-        return f"if {str(self.condition)} {str(self.consequence)}\n{'else '+ str(self.alternative) if self.alternative is not None else ''}"
+        return f"if {str(self.condition)} {{{str(self.consequence)}}} {'else {' + str(self.alternative) + '}' if self.alternative is not None else ''}"
 
 
 class FunctionLiteral(Expression):
-    def __init__(self, token: token.Token, parameters: list[Identifier] | None = None, body: BlockStatement | None = None) -> None:
+    def __init__(self, token: token.Token, parameters: list[Identifier], body: BlockStatement) -> None:
         self.token = token
-        self.parameters = parameters if parameters is not None else []
+        self.parameters = parameters
         self.body = body
 
     def __str__(self) -> str:
-        params = ', '.join([str(p) for p in self.parameters])
+        params = ', '.join(map(str, self.parameters))
         return f"{self.token_literal()}({params}) {str(self.body)}"
 
 
@@ -130,7 +130,7 @@ class LetStatement(Statement):
         self.value = value
 
     def __str__(self) -> str:
-        return f"{self.token_literal()} {str(self.name)} = {str(self.value) if self.value is not None else 'None'};\n"
+        return f"{self.token_literal()} {str(self.name)} = {str(self.value) if self.value is not None else 'None'};"
 
 
 class ReturnStatement(Statement):
@@ -139,7 +139,7 @@ class ReturnStatement(Statement):
         self.return_value = return_value
 
     def __str__(self) -> str:
-        return f"{self.token_literal()} {str(self.return_value) if self.return_value is not None else 'None'};\n"
+        return f"{self.token_literal()} {str(self.return_value) if self.return_value is not None else 'None'};"
 
 
 class Program(Node):

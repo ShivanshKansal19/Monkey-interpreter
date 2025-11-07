@@ -165,14 +165,14 @@ class Parser:
         return exp
 
     def parse_function_literal(self) -> ast.FunctionLiteral | None:
-        lit = ast.FunctionLiteral(self.cur_token)
+        fn_token = self.cur_token
         if not self.expect_peek(token.LPAREN):
             return None
-        lit.parameters = self.parse_function_parameters()
+        parameters = self.parse_function_parameters()
         if not self.expect_peek(token.LBRACE):
             return None
-        lit.body = self.parse_block_statement()
-        return lit
+        body = self.parse_block_statement()
+        return ast.FunctionLiteral(fn_token, parameters, body)
 
     def parse_function_parameters(self) -> list[ast.Identifier]:
         identifiers: list[ast.Identifier] = []
@@ -223,7 +223,7 @@ class Parser:
         return block
 
     def parse_let_statement(self) -> ast.LetStatement | None:
-        my_token = self.cur_token
+        let_token = self.cur_token
         if not self.expect_peek(token.IDENT):
             return None
         name = ast.Identifier(self.cur_token, self.cur_token.literal)
@@ -233,7 +233,7 @@ class Parser:
         value = self.parse_expression(LOWEST)
         if self.peek_token_is(token.SEMICOLON):
             self.next_token()
-        return ast.LetStatement(my_token, name, value)
+        return ast.LetStatement(let_token, name, value)
 
     def parse_return_statement(self) -> ast.ReturnStatement:
         stmt = ast.ReturnStatement(self.cur_token)

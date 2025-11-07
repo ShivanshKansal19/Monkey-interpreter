@@ -115,6 +115,33 @@ def test_let_statements(input: str, expected: int) -> None:
     assert_integer_object(evaluated, expected)
 
 
+def test_function_object() -> None:
+    input = "fn(x) { x + 2; };"
+    evaluated = eval_input(input)
+    assert isinstance(
+        evaluated, object.Function), f"object is not Function. got={type(evaluated)}({evaluated.__dict__}) instead"
+    assert len(
+        evaluated.parameters) == 1, f"function has wrong parameters. Parameters={evaluated.parameters}"
+    assert str(
+        evaluated.parameters[0]) == "x", f"parameter is not 'x'. got={str(evaluated.parameters[0])}"
+    expected_body = "(x + 2)"
+    assert str(
+        evaluated.body) == expected_body, f"body is not {expected_body}. got={evaluated.body}"
+
+
+@pytest.mark.parametrize('input, expected', [
+    ("let identity = fn(x) { x; }; identity(5);", 5),
+    ("let identity = fn(x) { return x; }; identity(5);", 5),
+    ("let double = fn(x) { x * 2; }; double(5);", 10),
+    ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+    ("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+    ("fn(x) { x; }(5)", 5),
+])
+def test_function_application(input: str, expected: int) -> None:
+    evaluated = eval_input(input)
+    assert_integer_object(evaluated, expected)
+
+
 @pytest.mark.parametrize('input, expected_message', [
     ("5 + true;", "type mismatch: INTEGER + BOOLEAN"),
     ("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"),
@@ -138,8 +165,8 @@ def test_error_handling(input: str, expected_message: str) -> None:
         evaluated, object.Error), f"object is not Error. got={type(evaluated)}({evaluated.__dict__}) instead"
     assert evaluated.message == expected_message, f"wrong error message. expected={expected_message}, got={evaluated.message}"
 
-# Helper functions
 
+# Helper functions
 
 def assert_null_object(obj: object.Object | None) -> None:
     assert isinstance(
