@@ -1,18 +1,12 @@
-let five = 5;
-let ten = 10;
-
-let add = fn(x, y) {
-    x + y;
-};
-
-let result = add(five, ten);
-
-let a=1;
-let b=1;
-
-if (5 < 10) {
-    a==b;
-    return true;
-} else {
-    return false;
+let factorial = fn(n) {
+    if (n==0){
+        return 1;
+    }
+    else {
+        if (n==1) {
+            return 1;
+        }
+    }
+    return factorial(n-1)*n;
 }
+factorial(5)

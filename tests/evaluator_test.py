@@ -142,6 +142,18 @@ def test_function_application(input: str, expected: int) -> None:
     assert_integer_object(evaluated, expected)
 
 
+def test_closures() -> None:
+    input = '''
+    let newAdder = fn(x) {
+        fn(y) { x + y };
+    };
+    let addTwo = newAdder(2);
+    addTwo(2);
+    '''
+    evaluated = eval_input(input)
+    assert_integer_object(evaluated, 4)
+
+
 @pytest.mark.parametrize('input, expected_message', [
     ("5 + true;", "type mismatch: INTEGER + BOOLEAN"),
     ("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"),
